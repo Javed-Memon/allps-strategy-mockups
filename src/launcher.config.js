@@ -16,7 +16,7 @@ const config = {
 
   // PIN protection — set to null to disable
   // Change this value after cloning. Do NOT commit a real PIN to a public repo.
-  accessPin: '1234',
+  accessPin: '1124',
 
   // Categories shown in the filter bar (order matters)
   categories: [
