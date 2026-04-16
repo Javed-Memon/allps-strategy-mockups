@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "id": "competitor-analysis",
+    "title": "Competitor Analysis",
+    "description": "Analysis of competition in Europe",
+    "category": "Competitive Analysis",
+    "tags": [
+      "Competition"
+    ],
+    "type": "react",
+    "file": "Competitor-Analysis",
+    "status": "review",
+    "addedAt": "2026-04-16",
+    "addedBy": "Javed Memon"
+  }
+]
