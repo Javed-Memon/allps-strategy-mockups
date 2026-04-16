@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react'
+import { useTheme } from './hooks/useTheme.js'
 import config from './launcher.config.js'
 import registry from './mockups-registry.json'
 import Header from './components/Header.jsx'
@@ -20,6 +21,7 @@ function isNew(dateStr) {
 }
 
 export default function App() {
+  const { theme, toggle: toggleTheme, isDark } = useTheme()
   const [unlocked, setUnlocked] = useState(!config.accessPin)
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
@@ -71,7 +73,7 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh' }}>
-      <Header config={config} total={registry.length} />
+      <Header config={config} total={registry.length} theme={theme} onToggleTheme={toggleTheme} />
 
       <main style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px 80px' }}>
         {/* Controls */}
