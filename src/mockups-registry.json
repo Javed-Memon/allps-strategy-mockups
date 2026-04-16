@@ -1,0 +1,26 @@
+[
+  {
+    "id": "product-roadmap-h2-2025",
+    "title": "Product Roadmap H2 2025",
+    "description": "Interactive roadmap prototype for the second half of 2025 covering AI interviews rollout, ATS enhancements, and the candidate trust initiative. Used for board-level alignment.",
+    "category": "Product Roadmap",
+    "tags": ["roadmap", "2025", "board", "AI interviews", "ATS"],
+    "type": "react",
+    "file": "ProductRoadmapH2",
+    "status": "approved",
+    "addedAt": "2025-01-10",
+    "addedBy": "Javed"
+  },
+  {
+    "id": "pricing-packaging-v2",
+    "title": "Pricing & Packaging v2",
+    "description": "Revised pricing tier exploration — Starter, Growth, and Enterprise — with usage-based AI interview credits. Includes competitive benchmarking against Ashby and Greenhouse.",
+    "category": "Pricing & Packaging",
+    "tags": ["pricing", "tiers", "competitive", "revenue"],
+    "type": "react",
+    "file": "PricingPackagingV2",
+    "status": "review",
+    "addedAt": "2025-01-18",
+    "addedBy": "Javed"
+  }
+]
