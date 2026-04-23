@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Allps AI — Compliance Implementation Hub</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --color-bg: #ffffff;
+    --color-bg-secondary: #f5f5f4;
+    --color-bg-tertiary: #eeece8;
+    --color-bg-info: #e6f1fb;
+    --color-text-primary: #1a1a18;
+    --color-text-secondary: #5f5e5a;
+    --color-text-tertiary: #888780;
+    --color-text-info: #185FA5;
+    --color-border: rgba(0,0,0,0.12);
+    --color-border-md: rgba(0,0,0,0.22);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font: -apple-system, 'Segoe UI', Arial, sans-serif;
+    --font-mono: 'SF Mono', 'Fira Mono', monospace;
+    --nav-w: 240px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-bg: #1c1c1a;
+      --color-bg-secondary: #252523;
+      --color-bg-tertiary: #2e2e2b;
+      --color-bg-info: #0c2d4a;
+      --color-text-primary: #e8e6e0;
+      --color-text-secondary: #a0a09a;
+      --color-text-tertiary: #6a6a64;
+      --color-text-info: #85b7eb;
+      --color-border: rgba(255,255,255,0.1);
+      --color-border-md: rgba(255,255,255,0.2);
+    }
+  }
+  body { font-family: var(--font); font-size: 14px; color: var(--color-text-primary); background: var(--color-bg); line-height: 1.5; }
+  .hub { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: var(--nav-w); flex-shrink: 0;
+    border-right: 0.5px solid var(--color-border);
+    position: fixed; top: 0; left: 0; height: 100vh;
+    overflow-y: auto; background: var(--color-bg);
+    z-index: 10;
+  }
+  .sidebar-logo { padding: 16px; border-bottom: 0.5px solid var(--color-border); }
+  .sidebar-logo .wordmark { font-size: 15px; font-weight: 600; color: var(--color-text-primary); }
+  .sidebar-logo .sub { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+  .nav-section { padding: 8px 0; }
+  .nav-label { font-size: 10px; font-weight: 600; color: var(--color-text-tertiary); letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 16px 2px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 16px; cursor: pointer;
+    font-size: 13px; color: var(--color-text-secondary);
+    border-left: 2px solid transparent; transition: all 0.12s;
+  }
+  .nav-item:hover { background: var(--color-bg-secondary); color: var(--color-text-primary); }
+  .nav-item.active { background: var(--color-bg-info); color: var(--color-text-info); border-left-color: #185FA5; font-weight: 500; }
+  .nav-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  .main { flex: 1; margin-left: var(--nav-w); }
+  .section { display: none; padding: 28px 32px; max-width: 860px; }
+  .section.active { display: block; }
+
+  .page-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 0.5px solid var(--color-border); }
+  .page-title { font-size: 20px; font-weight: 600; color: var(--color-text-primary); }
+  .page-sub { font-size: 13px; color: var(--color-text-secondary); margin-top: 4px; }
+
+  .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 600; }
+  .badge-p1 { background: #FCEBEB; color: #A32D2D; }
+  .badge-p2 { background: #FAEEDA; color: #854F0B; }
+  .badge-hi { background: #FCEBEB; color: #A32D2D; }
+  .badge-med { background: #FAEEDA; color: #854F0B; }
+  .badge-lo { background: #EAF3DE; color: #3B6D11; }
+  .badge-back { background: var(--color-bg-secondary); color: var(--color-text-secondary); border: 0.5px solid var(--color-border); }
+  .badge-ui { background: #EEEDFE; color: #3C3489; }
+  .badge-doc { background: #E1F5EE; color: #0F6E56; }
+  .badge-comm { background: #FAECE7; color: #993C1D; }
+  .badge-land { background: #E6F1FB; color: #185FA5; }
+
+  .rec-card { border: 0.5px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: 14px; overflow: hidden; }
+  .rec-header {
+    padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;
+    cursor: pointer; background: var(--color-bg);
+  }
+  .rec-header:hover { background: var(--color-bg-secondary); }
+  .rec-ref { font-size: 11px; font-weight: 600; color: var(--color-text-secondary); min-width: 34px; font-family: var(--font-mono); margin-top: 1px; }
+  .rec-title { font-size: 14px; font-weight: 500; color: var(--color-text-primary); flex: 1; line-height: 1.4; }
+  .rec-meta { display: flex; gap: 5px; flex-shrink: 0; align-items: center; flex-wrap: wrap; justify-content: flex-end; max-width: 200px; }
+  .rec-chevron { font-size: 14px; color: var(--color-text-tertiary); transition: transform 0.2s; flex-shrink: 0; margin-top: 1px; }
+  .rec-card.open .rec-chevron { transform: rotate(90deg); }
+  .rec-body { display: none; border-top: 0.5px solid var(--color-border); }
+  .rec-card.open .rec-body { display: block; }
+
+  .rec-tabs { display: flex; border-bottom: 0.5px solid var(--color-border); background: var(--color-bg-secondary); }
+  .rec-tab { padding: 9px 14px; font-size: 12px; cursor: pointer; color: var(--color-text-secondary); border-bottom: 2px solid transparent; margin-bottom: -0.5px; }
+  .rec-tab.active { color: var(--color-text-info); border-bottom-color: #185FA5; font-weight: 500; }
+  .rec-pane { display: none; padding: 16px; }
+  .rec-pane.active { display: block; }
+
+  .impl-block { background: var(--color-bg-secondary); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 10px; }
+  .impl-label { font-size: 10px; font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+  .impl-content { font-size: 13px; color: var(--color-text-primary); line-height: 1.65; }
+  .impl-content ul { padding-left: 18px; }
+  .impl-content li { margin-bottom: 4px; }
+  .impl-content code { font-family: var(--font-mono); font-size: 12px; background: var(--color-bg); border: 0.5px solid var(--color-border); padding: 1px 5px; border-radius: 4px; }
+
+  .copy-block { border: 0.5px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 12px; }
+  .copy-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--color-bg-secondary); border-bottom: 0.5px solid var(--color-border); }
+  .copy-label { font-size: 11px; font-weight: 600; color: var(--color-text-secondary); letter-spacing: 0.03em; }
+  .copy-btn { font-size: 11px; padding: 3px 10px; cursor: pointer; border: 0.5px solid var(--color-border-md); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text-secondary); font-family: var(--font); }
+  .copy-btn:hover { background: var(--color-bg-secondary); }
+  .copy-content { padding: 14px; font-size: 13px; color: var(--color-text-primary); line-height: 1.7; white-space: pre-wrap; font-family: var(--font-mono); background: var(--color-bg); max-height: 280px; overflow-y: auto; }
+
+  .checklist { list-style: none; padding: 0; }
+  .checklist li { display: flex; gap: 9px; align-items: flex-start; padding: 7px 0; border-bottom: 0.5px solid var(--color-border); font-size: 13px; color: var(--color-text-primary); line-height: 1.5; }
+  .checklist li:last-child { border-bottom: none; }
+  .check-icon { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; border: 0.5px solid var(--color-border-md); border-radius: 3px; background: var(--color-bg); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .check-icon.done { background: #185FA5; border-color: #185FA5; }
+  .check-icon.done::after { content: '✓'; color: white; font-size: 10px; font-weight: 700; }
+
+  .overview-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 22px; }
+  .stat-card { background: var(--color-bg-secondary); border-radius: var(--radius-md); padding: 14px 16px; }
+  .stat-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .stat-value { font-size: 24px; font-weight: 600; color: var(--color-text-primary); }
+  .stat-sub { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+
+  .phase-bar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 22px; }
+  .phase-pill { padding: 12px 14px; border-radius: var(--radius-md); border: 0.5px solid var(--color-border); }
+  .phase-pill .ph-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px; }
+  .phase-pill .ph-name { font-size: 13px; font-weight: 600; color: var(--color-text-primary); margin-bottom: 2px; }
+  .phase-pill .ph-date { font-size: 11px; color: var(--color-text-secondary); }
+  .ph1 .ph-label { color: #A32D2D; }
+  .ph2 .ph-label { color: #854F0B; }
+  .ph3 .ph-label { color: #3B6D11; }
+
+  .doc-section { margin-bottom: 22px; }
+  .doc-section h3 { font-size: 14px; font-weight: 600; color: var(--color-text-primary); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 0.5px solid var(--color-border); }
+
+  .alert-block { border: 0.5px solid #F09595; background: #FCEBEB; border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 16px; }
+  .alert-block .alert-label { font-size: 11px; font-weight: 700; color: #A32D2D; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .alert-block .alert-content { font-size: 13px; color: #791F1F; line-height: 1.6; }
+  .alert-block .alert-content ul { padding-left: 16px; }
+  .alert-block .alert-content li { margin-bottom: 3px; }
+</style>
+</head>
+<body>
+<div class="hub">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="wordmark">Allps AI</div>
+      <div class="sub">Compliance Implementation Hub</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active" onclick="showSection('overview',this)">
+        <span class="nav-dot" style="background:#185FA5"></span> Dashboard
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Pillars</div>
+      <div class="nav-item" onclick="showSection('p1',this)"><span class="nav-dot" style="background:#E24B4A"></span> Legal Basis &amp; Consent</div>
+      <div class="nav-item" onclick="showSection('p2',this)"><span class="nav-dot" style="background:#E24B4A"></span> Transparency &amp; Notices</div>
+      <div class="nav-item" onclick="showSection('p3',this)"><span class="nav-dot" style="background:#E24B4A"></span> Data Governance</div>
+      <div class="nav-item" onclick="showSection('p4',this)"><span class="nav-dot" style="background:#E24B4A"></span> Human Oversight</div>
+      <div class="nav-item" onclick="showSection('p5',this)"><span class="nav-dot" style="background:#EF9F27"></span> AI Documentation</div>
+      <div class="nav-item" onclick="showSection('p6',this)"><span class="nav-dot" style="background:#EF9F27"></span> Bias &amp; Monitoring</div>
+      <div class="nav-item" onclick="showSection('p7',this)"><span class="nav-dot" style="background:#E24B4A"></span> Candidate Rights</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Document Templates</div>
+      <div class="nav-item" onclick="showSection('privacy',this)"><span class="nav-dot" style="background:#1D9E75"></span> Privacy Notice</div>
+      <div class="nav-item" onclick="showSection('rights',this)"><span class="nav-dot" style="background:#1D9E75"></span> Rights Charter</div>
+      <div class="nav-item" onclick="showSection('howitworks',this)"><span class="nav-dot" style="background:#1D9E75"></span> How Our AI Works</div>
+      <div class="nav-item" onclick="showSection('consent',this)"><span class="nav-dot" style="background:#1D9E75"></span> Consent UI Copy</div>
+      <div class="nav-item" onclick="showSection('interview',this)"><span class="nav-dot" style="background:#1D9E75"></span> Interview Disclosure</div>
+      <div class="nav-item" onclick="showSection('dsr',this)"><span class="nav-dot" style="background:#1D9E75"></span> DSR Communications</div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- OVERVIEW -->
+    <div class="section active" id="section-overview">
+      <div class="page-header">
+        <div class="page-title">Compliance Implementation Dashboard</div>
+        <div class="page-sub">All 28 recommendations across 8 pillars — for design &amp; engineering teams · Allps AI Regulatory Compliance Framework v1.0</div>
+      </div>
+      <div class="overview-grid">
+        <div class="stat-card"><div class="stat-label">Total recommendations</div><div class="stat-value">28</div><div class="stat-sub">across 8 pillars</div></div>
+        <div class="stat-card"><div class="stat-label">Critical (P1)</div><div class="stat-value" style="color:#A32D2D">18</div><div class="stat-sub">immediate action</div></div>
+        <div class="stat-card"><div class="stat-label">Core compliance (P2)</div><div class="stat-value" style="color:#854F0B">10</div><div class="stat-sub">before Aug 2026</div></div>
+        <div class="stat-card"><div class="stat-label">Hard deadline</div><div class="stat-value" style="color:#185FA5">Aug '26</div><div class="stat-sub">EU AI Act enforcement</div></div>
+      </div>
+      <div class="alert-block">
+        <div class="alert-label">⚠ Prohibited practices — already illegal since 2 February 2025</div>
+        <div class="alert-content"><ul>
+          <li>Emotion recognition in workplace contexts (video/audio/biometric)</li>
+          <li>Biometric categorisation to infer race, political opinions, religion, sexual orientation</li>
+          <li>Social scoring based on behaviour or characteristics unrelated to the role</li>
+          <li>Subliminal manipulation of candidate responses</li>
+        </ul></div>
+      </div>
+      <div class="phase-bar">
+        <div class="phase-pill ph1"><div class="ph-label">Phase 1 — Foundation</div><div class="ph-name">Stop the bleeding</div><div class="ph-date">Now → Q3 2025</div></div>
+        <div class="phase-pill ph2"><div class="ph-label">Phase 2 — Core compliance</div><div class="ph-name">Build high-risk controls</div><div class="ph-date">Q4 2025 → Q2 2026</div></div>
+        <div class="phase-pill ph3"><div class="ph-label">Phase 3 — Maturity</div><div class="ph-name">Monitor &amp; optimise</div><div class="ph-date">Q3 2026 onwards</div></div>
+      </div>
+      <div class="impl-block">
+        <div class="impl-label">How to use this hub</div>
+        <div class="impl-content">Navigate each pillar using the left sidebar to see all recommendations, implementation guidelines, acceptance criteria, and ready-to-use document copy. Use the Document Templates section for production-ready privacy notices, consent copy, and candidate communications. Each recommendation card is expandable — click to see Specification, Dev Guide, and Acceptance Criteria tabs.</div>
+      </div>
+    </div>
+
+    <!-- PILLAR 1 -->
+    <div class="section" id="section-p1">
+      <div class="page-header">
+        <div class="page-title">Pillar 1 — Legal Basis &amp; Consent Architecture</div>
+        <div class="page-sub">R-01 through R-05 · All P1 · GDPR Art. 6, 7, 46 · nFADP Art. 6</div>
+      </div>
+
+      <div class="rec-card" id="r01">
+        <div class="rec-header" onclick="toggleRec('r01')">
+          <span class="rec-ref">R-01</span>
+          <span class="rec-title">Legitimate Interests Assessment (LIA) for core processing activities</span>
+          <div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-med">Medium</span><span class="badge badge-doc">Doc &amp; Process</span></div>
+          <span class="rec-chevron">›</span>
+        </div>
+        <div class="rec-body">
+          <div class="rec-tabs">
+            <div class="rec-tab active" onclick="showTab(this,'r01','spec')">Specification</div>
+            <div class="rec-tab" onclick="showTab(this,'r01','dev')">Dev guide</div>
+            <div class="rec-tab" onclick="showTab(this,'r01','accept')">Acceptance criteria</div>
+          </div>
+          <div class="rec-pane active" data-rec="r01" data-tab="spec">
+            <div class="impl-block"><div class="impl-label">What to produce</div><div class="impl-content">A documented Legitimate Interests Assessment (LIA) stored in the compliance register for: (1) CV parsing &amp; AI matching, (2) AI sourcing, (3) bias monitoring / model improvement. Each LIA must follow the three-step ICO/EDPB framework.</div></div>
+            <div class="impl-block"><div class="impl-label">Three-step LIA template</div><div class="impl-content"><ul><li><strong>Purpose test:</strong> Is there a legitimate interest? (Filling roles with best-fit candidates; improving model fairness)</li><li><strong>Necessity test:</strong> Is processing necessary and proportionate? (No less intrusive alternative achieves the same purpose)</li><li><strong>Balancing test:</strong> Do candidate interests override the interest? (Include: nature of data, reasonable expectations, safeguards in place)</li></ul></div></div>
+            <div class="impl-block"><div class="impl-label">Regulatory basis</div><div class="impl-content">GDPR Art. 6(1)(f). Owner: CPO. Legal counsel must review and sign off each LIA. Target: all three LIAs complete within 4 weeks of Phase 1 kickoff.</div></div>
+          </div>
+          <div class="rec-pane" data-rec="r01" data-tab="dev">
+            <div class="impl-block"><div class="impl-label">No backend build required</div><div class="impl-content">This is a documentation task. Store LIA documents in a compliance register (Notion, Confluence, or a dedicated folder). Link each LIA to the corresponding RoPA entry (R-11). Reference LIA document ID in code comments or database schema documentation where the processing activity is implemented.</div></div>
+          </div>
+          <div class="rec-pane" data-rec="r01" data-tab="accept">
+            <ul class="checklist">
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>LIA produced for CV parsing &amp; AI matching</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>LIA produced for AI sourcing</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>LIA produced for bias monitoring / model improvement</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>All LIAs reviewed and signed off by external legal counsel</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>LIAs stored in compliance register with version control</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>LIAs linked to corresponding RoPA entries</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="rec-card" id="r02">
+        <div class="rec-header" onclick="toggleRec('r02')">
+          <span class="rec-ref">R-02</span>
+          <span class="rec-title">Separate consent flows per AI feature (application / screening / skills / talent pool)</span>
+          <div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-med">Medium</span><span class="badge badge-ui">UI</span></div>
+          <span class="rec-chevron">›</span>
+        </div>
+        <div class="rec-body">
+          <div class="rec-tabs">
+            <div class="rec-tab active" onclick="showTab(this,'r02','spec')">Specification</div>
+            <div class="rec-tab" onclick="showTab(this,'r02','dev')">Dev guide</div>
+            <div class="rec-tab" onclick="showTab(this,'r02','accept')">Acceptance criteria</div>
+          </div>
+          <div class="rec-pane active" data-rec="r02" data-tab="spec">
+            <div class="impl-block"><div class="impl-label">Four distinct consent items required</div><div class="impl-content"><ul><li><strong>Consent A:</strong> Standard application processing (CV parsing, AI matching) — lawful basis: Legitimate Interest, but consent gate for transparency</li><li><strong>Consent B:</strong> AI screening interview recording — explicit consent, obtained pre-interview</li><li><strong>Consent C:</strong> AI skills interview recording — explicit consent, separate item from B</li><li><strong>Consent D:</strong> Talent pool inclusion beyond active role — explicit consent, separate from application</li></ul></div></div>
+            <div class="impl-block"><div class="impl-label">UI pattern — step-by-step screens</div><div class="impl-content">One consent item per screen. Unchecked toggle by default. Each screen must show: what data is collected, how it will be used, who can see it, how long it will be kept, and how to withdraw. No dark patterns — the withdraw path must be as easy as consent. See Consent UI Copy template in Document Templates.</div></div>
+          </div>
+          <div class="rec-pane" data-rec="r02" data-tab="dev">
+            <div class="impl-block"><div class="impl-label">Database schema</div><div class="impl-content"><code>consent_records</code> table fields: <code>candidate_id</code>, <code>consent_type</code> (enum: APPLICATION, SCREENING, SKILLS, TALENT_POOL), <code>version</code>, <code>granted_at</code> (timestamp), <code>withdrawn_at</code> (nullable timestamp), <code>capture_method</code>, <code>ip_hash</code>, <code>consent_text_snapshot</code>. Store as a dedicated table — never booleans on the candidate profile. Never pre-set any consent field to true.</div></div>
+            <div class="impl-block"><div class="impl-label">Withdrawal mechanism</div><div class="impl-content">Withdrawing Consent B or C must not affect active application status. Withdrawal of Consent D removes candidate from talent pool only. All withdrawal events must be timestamped and written to the audit log. Recruiter must be notified when AI consent is withdrawn mid-process.</div></div>
+          </div>
+          <div class="rec-pane" data-rec="r02" data-tab="accept">
+            <ul class="checklist">
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Four separate consent screens implemented</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>All toggles unchecked by default (no pre-ticking)</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Each consent item independently withdrawable</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Withdrawal does not change application_status for active roles</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Consent records stored in dedicated table (not profile table)</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Consent version and timestamp captured on every grant/withdrawal</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="rec-card" id="r03">
+        <div class="rec-header" onclick="toggleRec('r03')">
+          <span class="rec-ref">R-03</span>
+          <span class="rec-title">Granular consent withdrawal with no impact on application status</span>
+          <div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-hi">High</span><span class="badge badge-back">Backend</span></div>
+          <span class="rec-chevron">›</span>
+        </div>
+        <div class="rec-body">
+          <div class="rec-tabs">
+            <div class="rec-tab active" onclick="showTab(this,'r03','spec')">Specification</div>
+            <div class="rec-tab" onclick="showTab(this,'r03','dev')">Dev guide</div>
+            <div class="rec-tab" onclick="showTab(this,'r03','accept')">Acceptance criteria</div>
+          </div>
+          <div class="rec-pane active" data-rec="r03" data-tab="spec">
+            <div class="impl-block"><div class="impl-label">Core requirement — GDPR Art. 7(3) hard rule</div><div class="impl-content">Candidates must be able to withdraw any individual consent at any time without this affecting their active application or candidacy for roles they have applied to. Withdrawal must be as easy as granting consent — accessible from the Candidate Data Portal at all times.</div></div>
+          </div>
+          <div class="rec-pane" data-rec="r03" data-tab="dev">
+            <div class="impl-block"><div class="impl-label">Business logic implementation</div><div class="impl-content">Maintain <code>consent_status</code> as a completely separate concern from <code>application_status</code>. If screening interview consent is withdrawn after interview is completed: retain the interview data for the duration of the active application only, then delete. Flag to the recruiter that candidate has withdrawn AI interview consent — human review is then required. Log all downstream effects of withdrawal in the audit log.</div></div>
+          </div>
+          <div class="rec-pane" data-rec="r03" data-tab="accept">
+            <ul class="checklist">
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Withdrawal UI accessible from candidate dashboard at all times</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Withdrawal of any consent does not change application_status</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Recruiter is notified when AI consent is withdrawn mid-process</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>All withdrawal events logged with timestamp and downstream effects</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="rec-card" id="r04">
+        <div class="rec-header" onclick="toggleRec('r04')">
+          <span class="rec-ref">R-04</span>
+          <span class="rec-title">Formalise 6-month talent pool consent renewal with specific scope</span>
+          <div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-lo">Low</span><span class="badge badge-back">Backend</span></div>
+          <span class="rec-chevron">›</span>
+        </div>
+        <div class="rec-body">
+          <div class="rec-tabs">
+            <div class="rec-tab active" onclick="showTab(this,'r04','spec')">Specification</div>
+            <div class="rec-tab" onclick="showTab(this,'r04','accept')">Acceptance criteria</div>
+          </div>
+          <div class="rec-pane active" data-rec="r04" data-tab="spec">
+            <div class="impl-block"><div class="impl-label">Renewal email must include</div><div class="impl-content"><ul><li>The specific data being renewed (name, CV, skills assessment results, job preferences)</li><li>Current expiry date</li><li>Single-click renewal CTA</li><li>Single-click "delete my data" option with equal visual prominence to renewal</li><li>What happens if no action is taken (auto-delete at expiry)</li></ul></div></div>
+            <div class="impl-block"><div class="impl-label">Timing and automation</div><div class="impl-content">Renewal reminder sent at T-30 days before expiry. Second reminder at T-7 days. Auto-delete job runs at T=0 for all non-renewed records. Log all deletions in the retention audit log. No generic language — emails must name the exact data categories being renewed.</div></div>
+          </div>
+          <div class="rec-pane" data-rec="r04" data-tab="accept">
+            <ul class="checklist">
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Renewal emails name specific data scope (not generic language)</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Two-step reminder system implemented (T-30, T-7)</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Auto-delete job runs at expiry for non-renewed records</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>"Delete my data" option has equal visual prominence to renewal CTA</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Renewal and non-renewal events logged in consent_records table</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="rec-card" id="r05">
+        <div class="rec-header" onclick="toggleRec('r05')">
+          <span class="rec-ref">R-05</span>
+          <span class="rec-title">Standard Contractual Clauses (SCCs) for non-EEA sub-processors</span>
+          <div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-med">Medium</span><span class="badge badge-doc">Doc &amp; Process</span></div>
+          <span class="rec-chevron">›</span>
+        </div>
+        <div class="rec-body">
+          <div class="rec-tabs">
+            <div class="rec-tab active" onclick="showTab(this,'r05','spec')">Specification</div>
+            <div class="rec-tab" onclick="showTab(this,'r05','dev')">Dev guide</div>
+            <div class="rec-tab" onclick="showTab(this,'r05','accept')">Acceptance criteria</div>
+          </div>
+          <div class="rec-pane active" data-rec="r05" data-tab="spec">
+            <div class="impl-block"><div class="impl-label">Scope</div><div class="impl-content">Any LLM API provider or AI model service outside the EEA used in the AI pipeline requires SCCs or a valid adequacy decision. For each sub-processor: execute 2021 EU Commission SCCs, document a transfer impact assessment, implement data minimisation at the API call level (strip or pseudonymise PII before sending where technically feasible). Maintain a sub-processor register and notify clients of changes with 30 days notice.</div></div>
+          </div>
+          <div class="rec-pane" data-rec="r05" data-tab="dev">
+            <div class="impl-block"><div class="impl-label">PII stripping middleware</div><div class="impl-content">Implement a PII-stripping middleware layer in the AI pipeline. Before any candidate data is sent to third-party LLM APIs: remove or pseudonymise direct identifiers (name, email, phone, address). Document which fields are sent to each provider and the legal justification for each. This middleware should be the single point of control — all external AI API calls must route through it.</div></div>
+          </div>
+          <div class="rec-pane" data-rec="r05" data-tab="accept">
+            <ul class="checklist">
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Sub-processor register created and maintained</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>SCCs executed with all non-EEA AI API providers</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>PII-stripping middleware implemented for all external API calls</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Transfer impact assessments documented per provider</li>
+              <li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Client notification procedure in place for sub-processor changes</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PILLAR 2 -->
+    <div class="section" id="section-p2">
+      <div class="page-header">
+        <div class="page-title">Pillar 2 — Transparency &amp; Candidate Notices</div>
+        <div class="page-sub">R-06 through R-10 · P1 and P2 · GDPR Art. 13/14 · AI Act Art. 13, 26(7)</div>
+      </div>
+
+      <div class="rec-card" id="r06"><div class="rec-header" onclick="toggleRec('r06')"><span class="rec-ref">R-06</span><span class="rec-title">Rewrite candidate-facing Privacy Notice in plain language (max 8th-grade reading level)</span><div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-lo">Low</span><span class="badge badge-comm">Comms</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r06','spec')">Specification</div><div class="rec-tab" onclick="showTab(this,'r06','accept')">Acceptance criteria</div></div><div class="rec-pane active" data-rec="r06" data-tab="spec"><div class="impl-block"><div class="impl-label">Two-tier structure required</div><div class="impl-content"><strong>Tier 1 (short notice)</strong> — shown inline at point of data collection: 3–4 sentences. Must cover: what data, why, how long, how to get more info. Must mention AI use. Shown at application form start.<br><br><strong>Tier 2 (full notice)</strong> — linked from Tier 1. Max 8th-grade reading level. Sections: Who we are / What we collect / How AI uses your data / Who sees your data / How long we keep it / Your rights / How to contact us. See Privacy Notice template in Document Templates section.</div></div></div><div class="rec-pane" data-rec="r06" data-tab="accept"><ul class="checklist"><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Tier 1 short notice displayed at application start</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Tier 2 full notice accessible via link from Tier 1</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>AI use explicitly mentioned in both tiers</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Reading level verified (Flesch-Kincaid grade ≤8)</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Retention periods included for all data categories</li></ul></div></div></div>
+
+      <div class="rec-card" id="r07"><div class="rec-header" onclick="toggleRec('r07')"><span class="rec-ref">R-07</span><span class="rec-title">Mandatory AI disclosure at the start of every AI interview session</span><div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-lo">Low</span><span class="badge badge-ui">UI</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r07','spec')">Specification</div><div class="rec-tab" onclick="showTab(this,'r07','dev')">Dev guide</div><div class="rec-tab" onclick="showTab(this,'r07','accept')">Acceptance criteria</div></div><div class="rec-pane active" data-rec="r07" data-tab="spec"><div class="impl-block"><div class="impl-label">Disclosure must name</div><div class="impl-content">The AI platform (Allps AI), the specific AI function (screening assessment / skills assessment), the purpose of the assessment, and that a human recruiter will review all AI assessments before any hiring decision. Provide link to How Our AI Works page. Must appear before recording begins — never mid-interview.</div></div><div class="impl-block"><div class="impl-label">UI pattern</div><div class="impl-content">Full-screen pre-interview modal (not a dismissable banner). Candidate must click an explicit acknowledgement button before proceeding. Modal must not auto-dismiss. Acknowledgement event must be logged with timestamp. See Consent UI Copy template for production copy.</div></div></div><div class="rec-pane" data-rec="r07" data-tab="dev"><div class="impl-block"><div class="impl-label">Implementation gate</div><div class="impl-content">Gate interview recording start behind <code>interview_disclosure_acknowledged = true</code> flag on the interview session. Set this flag only on explicit candidate button click — never on timer, page load, or scroll event. Log acknowledgement with: session_id, candidate_id (hashed), acknowledgement_timestamp, disclosure_version. Apply same pattern to both screening and skills interviews.</div></div></div><div class="rec-pane" data-rec="r07" data-tab="accept"><ul class="checklist"><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Disclosure modal shown before every AI interview session</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Recording cannot start until candidate explicitly acknowledges</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Disclosure names specific AI function (screening vs skills)</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Human review statement included in disclosure</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Link to How Our AI Works included</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Acknowledgement logged with timestamp and disclosure version</li></ul></div></div></div>
+
+      <div class="rec-card" id="r08"><div class="rec-header" onclick="toggleRec('r08')"><span class="rec-ref">R-08</span><span class="rec-title">Candidate AI Rights page (web + in-app)</span><div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-med">Medium</span><span class="badge badge-ui">UI</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r08','spec')">Specification</div><div class="rec-tab" onclick="showTab(this,'r08','accept')">Acceptance criteria</div></div><div class="rec-pane active" data-rec="r08" data-tab="spec"><div class="impl-block"><div class="impl-label">Nine rights to cover</div><div class="impl-content"><ul><li>Right to know AI is used in the process</li><li>Right to human review of any AI-influenced outcome</li><li>Right to explanation of AI assessment factors</li><li>Right to access stored data</li><li>Right to correct inaccurate data</li><li>Right to erasure / deletion</li><li>Right to object to automated processing</li><li>Right to withdraw consent without affecting application</li><li>Right to lodge complaint with supervisory authority (Swiss FDPIC / national DPA)</li></ul>See Rights Charter template in Document Templates.</div></div><div class="impl-block"><div class="impl-label">Required link placements</div><div class="impl-content">Application confirmation email / Interview pre-notification email / Every consent screen / Platform footer / Company website. URL must be stable: /candidate-rights.</div></div></div><div class="rec-pane" data-rec="r08" data-tab="accept"><ul class="checklist"><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Rights page published at stable URL (/candidate-rights)</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>All 9 rights listed in plain language (no legal boilerplate)</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Contact method and 30-day SLA clearly stated</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Link to supervisory authority complaint procedure included</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Page linked from all 5 required touchpoints</li></ul></div></div></div>
+
+      <div class="rec-card" id="r09"><div class="rec-header" onclick="toggleRec('r09')"><span class="rec-ref">R-09</span><span class="rec-title">'How Our AI Works' plain-language summary per module</span><div class="rec-meta"><span class="badge badge-p2">P2</span><span class="badge badge-lo">Low</span><span class="badge badge-comm">Comms</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r09','spec')">Specification</div></div><div class="rec-pane active" data-rec="r09" data-tab="spec"><div class="impl-block"><div class="impl-label">Four modules — separate explainers required</div><div class="impl-content"><ul><li>AI Sourcing: how candidates are identified, what sources are used, what factors are considered</li><li>AI Matching: what the algorithm evaluates, what it explicitly does not use (no photo, nationality, marital status)</li><li>AI Screening Interview: what questions assess, how answers are evaluated, what AI looks for, what it does not infer</li><li>AI Skills Interview: what tasks test, how responses are scored, what competency areas are covered</li></ul>Each explainer: max 200 words, no technical jargon, include one "What it does NOT do" section per module. See How Our AI Works template in Document Templates.</div></div></div></div></div>
+
+      <div class="rec-card" id="r10"><div class="rec-header" onclick="toggleRec('r10')"><span class="rec-ref">R-10</span><span class="rec-title">Deployer Transparency Toolkit for client employers</span><div class="rec-meta"><span class="badge badge-p2">P2</span><span class="badge badge-med">Medium</span><span class="badge badge-doc">Doc &amp; Process</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r10','spec')">Specification</div></div><div class="rec-pane active" data-rec="r10" data-tab="spec"><div class="impl-block"><div class="impl-label">Toolkit contents</div><div class="impl-content"><ul><li>Template candidate privacy notice (editable, with required Allps AI AI disclosure section)</li><li>Template job posting AI disclosure paragraph (required field in job creation workflow)</li><li>Template interview invitation email with AI disclosure</li><li>Deployer obligations checklist under EU AI Act Art. 26</li><li>Implementation guide: what clients must configure vs what Allps AI handles natively</li></ul></div></div><div class="impl-block"><div class="impl-label">Dev requirement</div><div class="impl-content">AI use disclosure must be a required (non-skippable) field in the job creation workflow. Clients cannot publish a job without completing this field. Pre-populate with the standard template but allow editing. Log whether each published job has a disclosure statement.</div></div></div></div></div>
+    </div>
+
+    <!-- PILLAR 3 -->
+    <div class="section" id="section-p3">
+      <div class="page-header">
+        <div class="page-title">Pillar 3 — Data Governance &amp; Minimisation</div>
+        <div class="page-sub">R-11 through R-15 · All P1 · GDPR Art. 5(1)(c)(e)(f), Art. 28, Art. 30</div>
+      </div>
+
+      <div class="rec-card" id="r11"><div class="rec-header" onclick="toggleRec('r11')"><span class="rec-ref">R-11</span><span class="rec-title">Record of Processing Activities (RoPA)</span><div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-med">Medium</span><span class="badge badge-doc">Doc &amp; Process</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r11','spec')">Specification</div><div class="rec-tab" onclick="showTab(this,'r11','accept')">Acceptance criteria</div></div><div class="rec-pane active" data-rec="r11" data-tab="spec"><div class="impl-block"><div class="impl-label">Required RoPA fields per processing activity</div><div class="impl-content">Activity name / Purpose / Data categories / Data subjects / Lawful basis (with LIA reference if LI) / Recipients / Third countries / Retention period / Security measures / Last reviewed. Minimum 10 activities to document: application intake, CV parsing, AI matching, AI sourcing, screening interview, skills interview, talent pool management, recruiter access to profiles, bias monitoring, model training.</div></div><div class="impl-block"><div class="impl-label">Governance</div><div class="impl-content">Owner: CPO. Review cadence: quarterly. Tool: Notion, Confluence, or Google Sheets. Must be producible within 24 hours if requested by a supervisory authority.</div></div></div><div class="rec-pane" data-rec="r11" data-tab="accept"><ul class="checklist"><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>RoPA created with all required fields</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>All 10+ processing activities documented</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Quarterly review cadence scheduled (calendar invite set)</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>LIA references linked for all LI-based processing activities</li></ul></div></div></div>
+
+      <div class="rec-card" id="r12"><div class="rec-header" onclick="toggleRec('r12')"><span class="rec-ref">R-12</span><span class="rec-title">Automated data retention enforcement engine</span><div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-hi">High</span><span class="badge badge-back">Backend</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r12','spec')">Specification</div><div class="rec-tab" onclick="showTab(this,'r12','dev')">Dev guide</div><div class="rec-tab" onclick="showTab(this,'r12','accept')">Acceptance criteria</div></div><div class="rec-pane active" data-rec="r12" data-tab="spec"><div class="impl-block"><div class="impl-label">Retention policy rules</div><div class="impl-content"><ul><li>Unsuccessful candidates: auto-delete at T+12 months from application close date</li><li>Talent pool candidates: renewal reminder at T+5 months, auto-delete at T+12 months if not renewed</li><li>AI interview recordings: delete at application close + 6 months (or earlier per consent terms)</li><li>AI assessment results: same retention as application data</li><li>Audit logs: retain minimum 6 months (AI Act Art. 12)</li><li>Successful hires: follow employment records retention (typically 7 years)</li></ul></div></div></div><div class="rec-pane" data-rec="r12" data-tab="dev"><div class="impl-block"><div class="impl-label">Implementation pattern</div><div class="impl-content">Scheduled cron job (daily at 02:00 UTC). Query candidates table for records past retention date. Soft-delete first: set <code>deleted_at</code> timestamp. Hard-delete after 30-day grace period (allows DSR correction window). Write every deletion event to immutable audit log: candidate_id (hashed), deletion_reason_code (RETENTION_EXPIRY / CONSENT_WITHDRAWN / DSR_REQUEST), triggered_by (SYSTEM / MANUAL), timestamp. For interview recordings: delete from object storage AND remove database reference in a single transaction.</div></div></div><div class="rec-pane" data-rec="r12" data-tab="accept"><ul class="checklist"><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Scheduled deletion job runs daily</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Soft-delete with 30-day grace period before hard-delete</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>All deletion events logged to audit table with reason codes</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Interview recordings deleted from object storage AND database in single transaction</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Talent pool renewal trigger fires at T+5 months</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Retention job monitored — on-call alert on job failure</li></ul></div></div></div>
+
+      <div class="rec-card" id="r13"><div class="rec-header" onclick="toggleRec('r13')"><span class="rec-ref">R-13</span><span class="rec-title">AI input data field audit and minimisation</span><div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-med">Medium</span><span class="badge badge-back">Backend</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r13','spec')">Specification</div><div class="rec-tab" onclick="showTab(this,'r13','accept')">Acceptance criteria</div></div><div class="rec-pane active" data-rec="r13" data-tab="spec"><div class="impl-block"><div class="impl-label">Fields to audit and likely remove from AI inputs</div><div class="impl-content"><ul><li>Profile photo — remove from AI matching input (visual bias risk)</li><li>Nationality / citizenship — remove unless legally required for the specific role</li><li>Marital status — remove entirely (not job-relevant in any context)</li><li>Date of birth (full) — use age band only if required for analytics; never send raw DOB to AI models</li><li>Home address — not needed for AI matching; retain for post-hire only</li><li>Social media profile links — audit whether any are used in AI scoring</li></ul>Document the full audit: list every field, justify its inclusion or document its removal. This document is a required input to the Technical File (R-20).</div></div></div><div class="rec-pane" data-rec="r13" data-tab="accept"><ul class="checklist"><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Profile photo not sent to AI matching model</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Nationality and marital status removed from all AI inputs</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Full field audit documented and stored in compliance register</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Every remaining AI input field has documented justification</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Audit document incorporated into Technical File</li></ul></div></div></div>
+
+      <div class="rec-card" id="r14"><div class="rec-header" onclick="toggleRec('r14')"><span class="rec-ref">R-14</span><span class="rec-title">Data Processing Agreements (DPAs) with all sub-processors</span><div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-med">Medium</span><span class="badge badge-doc">Doc &amp; Process</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r14','spec')">Specification</div></div><div class="rec-pane active" data-rec="r14" data-tab="spec"><div class="impl-block"><div class="impl-label">DPA required for every sub-processor</div><div class="impl-content">Cloud providers, LLM API providers, analytics tools, email delivery services, video hosting. DPA must cover: processing instructions, data categories, processing purposes, security obligations, sub-processor restriction, audit rights, deletion on contract termination. Maintain a sub-processor register with: name, service, data categories processed, legal basis for transfer, SCC status, DPA signed date, next review date. Notify clients of sub-processor changes with 30 days notice.</div></div></div></div></div>
+
+      <div class="rec-card" id="r15"><div class="rec-header" onclick="toggleRec('r15')"><span class="rec-ref">R-15</span><span class="rec-title">Role-based access controls (RBAC) audit and access logging</span><div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-med">Medium</span><span class="badge badge-back">Backend</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r15','spec')">Specification</div><div class="rec-tab" onclick="showTab(this,'r15','dev')">Dev guide</div><div class="rec-tab" onclick="showTab(this,'r15','accept')">Acceptance criteria</div></div><div class="rec-pane active" data-rec="r15" data-tab="spec"><div class="impl-block"><div class="impl-label">Access model</div><div class="impl-content">Interview recordings and AI scores: accessible only to the specific recruiter(s) and hiring manager(s) assigned to that job role. No global admin access to candidate PII unless operationally justified and logged. Allps AI internal staff must access via a separate escalation path with mandatory reason logging.</div></div></div><div class="rec-pane" data-rec="r15" data-tab="dev"><div class="impl-block"><div class="impl-label">Implementation</div><div class="impl-content">Every request to <code>GET /candidates/{id}/interview</code> or <code>GET /candidates/{id}/scores</code> must verify caller is on the <code>job_access_list</code> for the associated job. Log all access events to <code>access_audit_log</code>: user_id, resource_type, resource_id, action, timestamp, ip_hash. Flag unusual access patterns (bulk downloads, off-hours access). Access log retention: minimum 12 months.</div></div></div><div class="rec-pane" data-rec="r15" data-tab="accept"><ul class="checklist"><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Interview recordings accessible only to assigned job team</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>All access events logged with user, resource, timestamp</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Admin escalation path requires reason logging</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Access logs retained for minimum 12 months</li></ul></div></div></div>
+    </div>
+
+    <!-- PILLAR 4 -->
+    <div class="section" id="section-p4">
+      <div class="page-header">
+        <div class="page-title">Pillar 4 — Automated Decision-Making &amp; Human Oversight</div>
+        <div class="page-sub">R-16 through R-19 · P1 and P2 · GDPR Art. 22 · AI Act Art. 14, 86</div>
+      </div>
+
+      <div class="rec-card" id="r16"><div class="rec-header" onclick="toggleRec('r16')"><span class="rec-ref">R-16</span><span class="rec-title">Human-in-the-loop gate before any rejection is communicated to a candidate</span><div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-hi">High</span><span class="badge badge-back">Backend</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r16','spec')">Specification</div><div class="rec-tab" onclick="showTab(this,'r16','dev')">Dev guide</div><div class="rec-tab" onclick="showTab(this,'r16','accept')">Acceptance criteria</div></div><div class="rec-pane active" data-rec="r16" data-tab="spec"><div class="impl-block"><div class="impl-label">Core requirement — GDPR Art. 22 hard block</div><div class="impl-content">The ATS workflow must prevent any rejection notification from being sent until a recruiter has explicitly taken an action (Approve for next stage / Reject / Hold). AI can recommend — it cannot auto-reject. Pure automated rejection without human review is prohibited under GDPR Art. 22.</div></div><div class="impl-block"><div class="impl-label">ATS state machine</div><div class="impl-content">Pipeline states: AI_ASSESSED → PENDING_HUMAN_REVIEW → (APPROVED / REJECTED / HELD). Rejection notification emails can only be triggered from REJECTED state. REJECTED state requires explicit recruiter action. No automated transition from AI_ASSESSED to any outbound communication state.</div></div></div><div class="rec-pane" data-rec="r16" data-tab="dev"><div class="impl-block"><div class="impl-label">Implementation</div><div class="impl-content">Add middleware guard on the rejection notification job: check <code>candidate.reviewed_by_human !== null</code> before allowing outbound rejection email. Surface a "Candidates pending review" queue as the primary workflow entry point in the recruiter dashboard. Log for every review: reviewer_user_id, review_timestamp, decision (APPROVED/REJECTED/HELD), ai_recommendation_followed (boolean).</div></div></div><div class="rec-pane" data-rec="r16" data-tab="accept"><ul class="checklist"><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Rejection notification impossible without explicit recruiter action</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>"Pending review" queue visible as primary dashboard entry point</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Every rejection logged with reviewer ID and timestamp</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>No automated state transitions that bypass the review gate</li></ul></div></div></div>
+
+      <div class="rec-card" id="r17"><div class="rec-header" onclick="toggleRec('r17')"><span class="rec-ref">R-17</span><span class="rec-title">Recruiter override function with reason logging in ATS</span><div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-med">Medium</span><span class="badge badge-ui">UI</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r17','spec')">Specification</div><div class="rec-tab" onclick="showTab(this,'r17','accept')">Acceptance criteria</div></div><div class="rec-pane active" data-rec="r17" data-tab="spec"><div class="impl-block"><div class="impl-label">Override UI pattern</div><div class="impl-content">When a recruiter changes an AI rank or rejects an AI-recommended candidate, a prompt appears: "You are overriding the AI recommendation. Reason (optional):" Dropdown: Better fit identified elsewhere / Role requirements changed / AI assessment incomplete / Candidate withdrew / Other. Free text for Other. Reason stored in audit log — never shown to candidate.</div></div><div class="impl-block"><div class="impl-label">Override data use</div><div class="impl-content">Anonymised override data (reason code + demographic band of overridden candidate) feeds into the bias monitoring pipeline (R-25) to identify systematic patterns where AI recommendations are overridden for specific demographic groups.</div></div></div><div class="rec-pane" data-rec="r17" data-tab="accept"><ul class="checklist"><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Override prompt appears on AI recommendation change</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Reason stored in audit log (not candidate-visible)</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Override events included in bias monitoring pipeline input</li></ul></div></div></div>
+
+      <div class="rec-card" id="r18"><div class="rec-header" onclick="toggleRec('r18')"><span class="rec-ref">R-18</span><span class="rec-title">Candidate 'Request Human Review' button on AI decision notification pages</span><div class="rec-meta"><span class="badge badge-p2">P2</span><span class="badge badge-med">Medium</span><span class="badge badge-ui">UI</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r18','spec')">Specification</div><div class="rec-tab" onclick="showTab(this,'r18','accept')">Acceptance criteria</div></div><div class="rec-pane active" data-rec="r18" data-tab="spec"><div class="impl-block"><div class="impl-label">Flow</div><div class="impl-content">Button appears on candidate-facing AI interview result pages. Click triggers: (1) tracked request in DSR workflow, (2) automated acknowledgement email to candidate within 24 hours, (3) task created in recruiter's ATS queue with 5 business day SLA. Request logged with: request_id, candidate_id (hashed), job_id, timestamp.</div></div></div><div class="rec-pane" data-rec="r18" data-tab="accept"><ul class="checklist"><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Button present on all AI-driven decision notification pages</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Acknowledgement email sent automatically within 24 hours</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Recruiter task created with 5 business day SLA displayed</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>All requests logged and trackable with request_id</li></ul></div></div></div>
+
+      <div class="rec-card" id="r19"><div class="rec-header" onclick="toggleRec('r19')"><span class="rec-ref">R-19</span><span class="rec-title">'Explain My Assessment' candidate-facing feature</span><div class="rec-meta"><span class="badge badge-p2">P2</span><span class="badge badge-hi">High</span><span class="badge badge-ui">UI</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r19','spec')">Specification</div><div class="rec-tab" onclick="showTab(this,'r19','dev')">Dev guide</div><div class="rec-tab" onclick="showTab(this,'r19','accept')">Acceptance criteria</div></div><div class="rec-pane active" data-rec="r19" data-tab="spec"><div class="impl-block"><div class="impl-label">What to show candidates</div><div class="impl-content"><ul><li>Competency areas evaluated (e.g. Communication, Technical Problem-Solving, Situational Judgement)</li><li>Relative importance / weighting of each competency for this specific role</li><li>Qualitative tier indicator: Strong / Meets Expectations / Needs Development</li><li>One sentence plain-language rationale per competency area</li></ul></div></div><div class="impl-block"><div class="impl-label">What NOT to expose</div><div class="impl-content">Raw model scores, confidence percentages, internal model weights, training data references, model architecture. The explanation must be human-interpretable — not a raw model output dump.</div></div></div><div class="rec-pane" data-rec="r19" data-tab="dev"><div class="impl-block"><div class="impl-label">Explainability layer architecture</div><div class="impl-content">Build a mapping layer: model output scores → competency tier buckets. Tier thresholds: Strong (top 33% vs role benchmark), Meets Expectations (middle 33%), Needs Development (bottom 33%). Generate rationale text via template or LLM summary referencing only assessed behaviours. Store generated explanation with interview_session_id — serve from storage, never re-generate on each page load.</div></div></div><div class="rec-pane" data-rec="r19" data-tab="accept"><ul class="checklist"><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Competency areas shown — not raw scores or percentages</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Qualitative tiers (Strong / Meets / Needs) displayed per competency</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Plain-language rationale provided per competency</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>No model internals, weights, or confidence scores exposed</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Rationale references only job-relevant behaviours</li></ul></div></div></div>
+    </div>
+
+    <!-- PILLAR 5 -->
+    <div class="section" id="section-p5">
+      <div class="page-header">
+        <div class="page-title">Pillar 5 — AI System Documentation &amp; Technical File</div>
+        <div class="page-sub">R-20 through R-23 · P1 and P2 · AI Act Art. 9, 11, 35, 49 · Annex IV</div>
+      </div>
+      <div class="rec-card" id="r20"><div class="rec-header" onclick="toggleRec('r20')"><span class="rec-ref">R-20</span><span class="rec-title">EU AI Act Technical File per high-risk AI module (4 modules)</span><div class="rec-meta"><span class="badge badge-p2">P2</span><span class="badge badge-hi">High</span><span class="badge badge-doc">Doc &amp; Process</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r20','spec')">Specification</div><div class="rec-tab" onclick="showTab(this,'r20','accept')">Acceptance criteria</div></div><div class="rec-pane active" data-rec="r20" data-tab="spec"><div class="impl-block"><div class="impl-label">Required for 4 high-risk modules</div><div class="impl-content">AI Sourcing / AI Matching / AI Screening Interview / AI Skills Interview. Each Technical File must contain all 8 sections per AI Act Annex IV: (a) System description and intended purpose, (b) System architecture overview, (c) Training data description (provenance, size, preprocessing steps, bias assessment), (d) Performance metrics on validation set (accuracy, precision, recall), (e) Bias test results by gender/age/ethnicity, (f) Known limitations and edge cases, (g) Human oversight mechanisms, (h) Version and update history. This is a regulatory inspection document — internal only, not public.</div></div></div><div class="rec-pane" data-rec="r20" data-tab="accept"><ul class="checklist"><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Technical File produced for AI Sourcing</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Technical File produced for AI Matching</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Technical File produced for AI Screening Interview</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Technical File produced for AI Skills Interview</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>All 8 Annex IV sections (a–h) complete per file</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>All files complete before 2 August 2026</li></ul></div></div></div>
+      <div class="rec-card" id="r21"><div class="rec-header" onclick="toggleRec('r21')"><span class="rec-ref">R-21</span><span class="rec-title">Risk Register per AI module (AI Act Art. 9)</span><div class="rec-meta"><span class="badge badge-p2">P2</span><span class="badge badge-med">Medium</span><span class="badge badge-doc">Doc &amp; Process</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r21','spec')">Specification</div></div><div class="rec-pane active" data-rec="r21" data-tab="spec"><div class="impl-block"><div class="impl-label">Risk register fields per entry</div><div class="impl-content">Risk ID / Risk description / Likelihood (1–5) / Severity (1–5) / Risk score (L × S) / Current mitigation / Residual risk level / Review date / Owner. Review before every major model update and at minimum quarterly. Key risks to document per module: discriminatory output, data leakage, model drift, adversarial input manipulation, recruiter over-reliance, training data staleness.</div></div></div></div></div>
+      <div class="rec-card" id="r22"><div class="rec-header" onclick="toggleRec('r22')"><span class="rec-ref">R-22</span><span class="rec-title">DPIA for each high-risk AI processing activity (3 DPIAs)</span><div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-med">Medium</span><span class="badge badge-doc">Doc &amp; Process</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r22','spec')">Specification</div></div><div class="rec-pane active" data-rec="r22" data-tab="spec"><div class="impl-block"><div class="impl-label">Three DPIAs required</div><div class="impl-content">DPIA 1: AI Screening Interview / DPIA 2: AI Skills Interview / DPIA 3: AI Sourcing and Matching (combined). Use ICO/EDPB DPIA template. Each DPIA must cover: processing description, necessity and proportionality assessment, risk identification (likelihood × severity matrix), mitigation measures, residual risk sign-off by DPO. Review annually or after significant system changes. DPO sign-off required before initial deployment.</div></div></div></div></div>
+      <div class="rec-card" id="r23"><div class="rec-header" onclick="toggleRec('r23')"><span class="rec-ref">R-23</span><span class="rec-title">Register all high-risk AI systems in EU AI public database</span><div class="rec-meta"><span class="badge badge-p2">P2</span><span class="badge badge-lo">Low</span><span class="badge badge-doc">Doc &amp; Process</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r23','spec')">Specification</div></div><div class="rec-pane active" data-rec="r23" data-tab="spec"><div class="impl-block"><div class="impl-label">Registration requirements</div><div class="impl-content">Register all 4 high-risk AI modules in the EU AI Act database (EAIS) before 2 August 2026. Database portal: ai-database.eu (live 2026). Switzerland-based providers: register as provider with EU representative appointed or via Swiss cross-reference mechanism. All four Technical Files (R-20) must be complete before registration can occur.</div></div></div></div></div>
+    </div>
+
+    <!-- PILLAR 6 -->
+    <div class="section" id="section-p6">
+      <div class="page-header">
+        <div class="page-title">Pillar 6 — Bias Testing &amp; Ongoing Monitoring</div>
+        <div class="page-sub">R-24 through R-26 · P1 and P2 · AI Act Art. 10, 72, 73 · EU Charter Art. 21</div>
+      </div>
+      <div class="rec-card" id="r24"><div class="rec-header" onclick="toggleRec('r24')"><span class="rec-ref">R-24</span><span class="rec-title">Bias testing across protected characteristics before deployment and per model update</span><div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-hi">High</span><span class="badge badge-back">Backend</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r24','spec')">Specification</div><div class="rec-tab" onclick="showTab(this,'r24','dev')">Dev guide</div><div class="rec-tab" onclick="showTab(this,'r24','accept')">Acceptance criteria</div></div><div class="rec-pane active" data-rec="r24" data-tab="spec"><div class="impl-block"><div class="impl-label">Protected characteristics to test</div><div class="impl-content">Gender / Age band / Ethnicity (where data available) / Disability status (where disclosed). Test must be conducted: before initial deployment, after any model update, quarterly on production data. Use the 80% Rule (4/5 Rule) as threshold: if any group's pass rate is less than 80% of the highest-passing group's rate, flag for investigation. No model may be deployed to production without a passing bias test result.</div></div></div><div class="rec-pane" data-rec="r24" data-tab="dev"><div class="impl-block"><div class="impl-label">Pipeline implementation</div><div class="impl-content">(1) Extract anonymised scoring data with demographic bands — no raw PII. (2) Compute advance/pass rates by demographic group per model per pipeline stage. (3) Calculate adverse impact ratio vs highest-passing group: AIR = (group_rate / highest_rate). (4) Flag if AIR &lt; 0.8. (5) Generate bias test report with statistical significance indicators. (6) Store report in compliance register with model version tag. Run as mandatory gate in CI/CD pipeline for model updates — deployment blocked if bias test fails.</div></div></div><div class="rec-pane" data-rec="r24" data-tab="accept"><ul class="checklist"><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Bias test suite covers gender, age, and ethnicity</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>80% adverse impact rule threshold configured</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Tests run as mandatory gate in CI/CD for model updates</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Test reports stored in compliance register per model version</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>No model deployable to production without passing bias test</li></ul></div></div></div>
+      <div class="rec-card" id="r25"><div class="rec-header" onclick="toggleRec('r25')"><span class="rec-ref">R-25</span><span class="rec-title">Post-market bias monitoring pipeline (AI Act Art. 72)</span><div class="rec-meta"><span class="badge badge-p2">P2</span><span class="badge badge-hi">High</span><span class="badge badge-back">Backend</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r25','spec')">Specification</div></div><div class="rec-pane active" data-rec="r25" data-tab="spec"><div class="impl-block"><div class="impl-label">Monitoring pipeline</div><div class="impl-content">Weekly scheduled job: compute advance rates by demographic group across all active jobs. Alert compliance owner if adverse impact ratio drops below 0.8 for any protected group. Internal compliance dashboard: trend by week, active alerts, models flagged. Named compliance owner reviews alerts within 5 business days. Log all monitoring runs — these records are required for AI Act Art. 72 post-market monitoring documentation.</div></div></div></div></div>
+      <div class="rec-card" id="r26"><div class="rec-header" onclick="toggleRec('r26')"><span class="rec-ref">R-26</span><span class="rec-title">Incident response procedure for AI bias and discrimination complaints</span><div class="rec-meta"><span class="badge badge-p2">P2</span><span class="badge badge-lo">Low</span><span class="badge badge-doc">Doc &amp; Process</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r26','spec')">Specification</div></div><div class="rec-pane active" data-rec="r26" data-tab="spec"><div class="impl-block"><div class="impl-label">Procedure steps</div><div class="impl-content">1. Complaint intake (email or DSR portal) → assigned to DPO within 24h. 2. Acknowledge candidate within 3 business days. 3. Investigation: review audit logs, bias monitoring data, model version active at time of decision (max 30-day timeline). 4. If personal data breach confirmed: notify supervisory authority within 72h (GDPR Art. 33). 5. Remediation plan and communication to affected candidate. 6. Post-incident review: update risk register and bias monitoring thresholds. Document procedure and store in compliance register.</div></div></div></div></div>
+    </div>
+
+    <!-- PILLAR 7 -->
+    <div class="section" id="section-p7">
+      <div class="page-header">
+        <div class="page-title">Pillar 7 — Candidate Rights &amp; Data Subject Requests</div>
+        <div class="page-sub">R-27 through R-28 · Both P1 · GDPR Art. 12, 15–22</div>
+      </div>
+      <div class="rec-card" id="r27"><div class="rec-header" onclick="toggleRec('r27')"><span class="rec-ref">R-27</span><span class="rec-title">Self-service Candidate Data Portal</span><div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-hi">High</span><span class="badge badge-ui">UI</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r27','spec')">Specification</div><div class="rec-tab" onclick="showTab(this,'r27','dev')">Dev guide</div><div class="rec-tab" onclick="showTab(this,'r27','accept')">Acceptance criteria</div></div><div class="rec-pane active" data-rec="r27" data-tab="spec"><div class="impl-block"><div class="impl-label">Six required portal capabilities</div><div class="impl-content"><ul><li>View all stored data (profile, CV, application history, consent records, AI assessment results)</li><li>Update / correct inaccurate profile data</li><li>Download full data export (JSON or PDF) — within 30 days of request</li><li>Withdraw individual consents</li><li>Submit deletion request — triggers DSR workflow, fulfilled within 30 days</li><li>Submit correction request</li></ul>Access via magic link in application confirmation email (time-limited token, 7-day validity) — no new account creation required.</div></div></div><div class="rec-pane" data-rec="r27" data-tab="dev"><div class="impl-block"><div class="impl-label">Technical requirements</div><div class="impl-content">Magic link authentication: time-limited JWT token (7-day validity), signed with server secret. Data export endpoint: aggregate across all storage systems (candidate_profiles, consent_records, interview recordings metadata, audit_log entries for that candidate). Deletion request: create ticket in DSR workflow, trigger soft-delete pipeline, confirm via email. Identity verification required before deletion: match email + confirmation code. Export file: JSON preferred, PDF fallback.</div></div></div><div class="rec-pane" data-rec="r27" data-tab="accept"><ul class="checklist"><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>All 6 portal capabilities implemented</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Data export covers all storage systems</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Magic link access — no new account creation required</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>DSR 30-day fulfilment SLA tracked and enforced</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>All DSR events logged with timestamps</li></ul></div></div></div>
+      <div class="rec-card" id="r28"><div class="rec-header" onclick="toggleRec('r28')"><span class="rec-ref">R-28</span><span class="rec-title">DSR workflow in ATS backend</span><div class="rec-meta"><span class="badge badge-p1">P1</span><span class="badge badge-med">Medium</span><span class="badge badge-back">Backend</span></div><span class="rec-chevron">›</span></div><div class="rec-body"><div class="rec-tabs"><div class="rec-tab active" onclick="showTab(this,'r28','spec')">Specification</div><div class="rec-tab" onclick="showTab(this,'r28','accept')">Acceptance criteria</div></div><div class="rec-pane active" data-rec="r28" data-tab="spec"><div class="impl-block"><div class="impl-label">DSR workflow steps</div><div class="impl-content">1. Intake via portal or email → create DSR ticket with type (access / erasure / correction / portability / objection), auto-assign to DPO. 2. Identity verification: email match + confirmation code within 5 days. 3. Fulfilment (max 30 days from intake): run appropriate data pipeline. 4. Confirmation to candidate: email with summary of actions taken. 5. Log: DSR_id, type, received_at, verified_at, fulfilled_at, outcome, fulfilled_by. Client admins must also have access to export and delete candidate data via admin panel.</div></div></div><div class="rec-pane" data-rec="r28" data-tab="accept"><ul class="checklist"><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>DSR ticketing system implemented (all 5 types)</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Identity verification step enforced before fulfilment</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>30-day fulfilment SLA tracked in ticketing system</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Confirmation email sent on fulfilment</li><li><span class="check-icon" onclick="this.classList.toggle('done')"></span>Client admin export/delete capability implemented in admin panel</li></ul></div></div></div>
+    </div>
+
+    <!-- PRIVACY NOTICE -->
+    <div class="section" id="section-privacy">
+      <div class="page-header">
+        <div class="page-title">Document: Candidate Privacy Notice</div>
+        <div class="page-sub">Production-ready copy for R-06 · GDPR Art. 13/14 compliant · Plain language · Two-tier structure</div>
+      </div>
+      <div class="doc-section"><h3>Tier 1 — Short notice (shown inline at application form)</h3>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">TIER 1 — SHORT NOTICE</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">We collect and use your personal data — including your CV, application responses, and AI interview recordings — to assess your suitability for this role. Our AI systems help screen and score applications, but a qualified recruiter reviews all AI assessments before any decision is made. We keep unsuccessful candidate data for up to 12 months, then delete it. You have the right to access, correct, or delete your data at any time. Read our full Privacy Notice and Candidate Rights page to learn more, or email privacy@allps.ai with any questions.</div></div>
+      </div>
+      <div class="doc-section"><h3>Tier 2 — Full Privacy Notice (sections)</h3>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">SECTION 1 — Who we are</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">Allps AI AG is a technology company based in Switzerland that provides AI-powered hiring software. For the purposes of this privacy notice, Allps AI is the data processor acting on behalf of the employer (data controller) you applied to. The employer is responsible for deciding how your data is used in their hiring process.
+
+Data Controller: [Employer name and address]
+Data Processor: Allps AI AG, [address], Switzerland
+Data Protection Contact: privacy@allps.ai</div></div>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">SECTION 2 — What data we collect and why</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">YOUR APPLICATION DATA
+What: Your name, email address, CV/resume, cover letter, work history, education, skills, and any other information you provide in your application.
+Why: To process your application and assess your suitability for the role.
+Legal basis: Legitimate interest of the employer to assess candidates for employment.
+
+YOUR AI INTERVIEW RECORDINGS
+What: Audio and video recordings of your AI screening and/or skills interview. Your spoken responses and the text transcripts generated from them.
+Why: To assess your communication, skills, and suitability for the role using our AI system.
+Legal basis: Your explicit consent, obtained before the interview begins. You may withdraw consent at any time.
+
+YOUR AI ASSESSMENT SCORES
+What: Scores and competency ratings generated by our AI system based on your application and interviews.
+Why: To help recruiters identify suitable candidates. All AI scores are reviewed by a human recruiter before any hiring decision.
+Legal basis: Legitimate interest of the employer.
+
+YOUR TALENT POOL DATA (if you opt in)
+What: Your profile data kept on file after your application closes.
+Why: So the employer can contact you about future relevant roles.
+Legal basis: Your explicit consent, renewed every 6 months. You may withdraw at any time.</div></div>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">SECTION 3 — How AI is used in this process</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">Allps AI uses artificial intelligence to help employers find the best candidates for their roles. Here is what our AI does and does not do:
+
+AI SOURCING: Our AI searches for candidates whose skills and experience match a job description. It considers your stated qualifications, experience, and skills — not your photo, nationality, marital status, or personal characteristics.
+
+AI MATCHING: Our AI compares your profile to the requirements of each role and generates a match score. This score helps recruiters prioritise which applications to review first. It does not replace recruiter judgment.
+
+AI SCREENING INTERVIEW: Our AI conducts a structured interview to assess your communication and situational judgement. It evaluates what you say in response to interview questions — it does not analyse your facial expressions, emotions, or personal characteristics.
+
+AI SKILLS INTERVIEW: Our AI presents technical tasks or role-specific challenges and evaluates your responses. It assesses the quality and relevance of your answers against defined role competencies.
+
+IMPORTANT: No AI system makes a final hiring decision. A qualified human recruiter reviews all AI assessments before any candidate is progressed or rejected.</div></div>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">SECTION 4 — How long we keep your data</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">UNSUCCESSFUL CANDIDATES
+We keep your application data, interview recordings, and AI assessment results for up to 12 months after the role closes. After this, all data is permanently deleted.
+
+TALENT POOL CANDIDATES (if you opted in)
+We keep your data for 6 months and then ask for your renewed consent to keep it longer. If you do not renew, your data is deleted. Maximum retention with renewed consent: 24 months total.
+
+SUCCESSFUL HIRES
+Your data is transferred to the employer's HR systems and retained according to their employment records policy (typically 7 years).
+
+AI INTERVIEW RECORDINGS
+Deleted when the application process ends, and no later than 6 months after role closure.</div></div>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">SECTION 5 — Who sees your data</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">YOUR DATA IS SHARED WITH:
+- The employer you applied to (recruiters and hiring managers assigned to the role)
+- Allps AI technical staff (only where necessary for platform support, under strict access controls)
+
+YOUR DATA IS NOT:
+- Sold to third parties
+- Used to advertise products or services to you
+- Shared with other employers without your consent
+- Used to train our AI models without your explicit consent
+
+THIRD-PARTY TECHNOLOGY PROVIDERS
+We use technology providers to operate our platform (cloud hosting, AI model APIs, email delivery). These providers only process your data on our instructions. We have data processing agreements in place with all providers. For providers outside the EU/EEA, we use Standard Contractual Clauses to protect your data.</div></div>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">SECTION 6 — Your rights</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">Under GDPR and the Swiss nFADP, you have the following rights:
+
+RIGHT TO ACCESS — You can request a copy of all personal data we hold about you.
+RIGHT TO CORRECTION — You can ask us to correct any inaccurate data.
+RIGHT TO ERASURE — You can ask us to delete your data (subject to legal retention requirements).
+RIGHT TO OBJECT — You can object to your data being processed by our AI systems.
+RIGHT TO HUMAN REVIEW — You can request that a human recruiter reviews any AI-influenced hiring decision.
+RIGHT TO EXPLANATION — You can ask us to explain the main factors our AI considered in assessing you.
+RIGHT TO DATA PORTABILITY — You can request your data in a machine-readable format.
+RIGHT TO WITHDRAW CONSENT — You can withdraw any consent at any time without affecting your active application.
+
+HOW TO EXERCISE YOUR RIGHTS
+Use your Candidate Data Portal (link in your application confirmation email), or email privacy@allps.ai. We will respond within 30 days.
+
+COMPLAINTS
+If you believe we have not handled your data correctly, you can lodge a complaint with the Swiss Federal Data Protection and Information Commissioner (FDPIC) at edoeb.admin.ch, or with the national data protection authority in your country of residence.</div></div>
+      </div>
+    </div>
+
+    <!-- RIGHTS CHARTER -->
+    <div class="section" id="section-rights">
+      <div class="page-header">
+        <div class="page-title">Document: Candidate Rights Charter</div>
+        <div class="page-sub">Public-facing document for R-08 · Web + in-app · Plain language · No legal boilerplate</div>
+      </div>
+      <div class="copy-block"><div class="copy-header"><span class="copy-label">CANDIDATE RIGHTS CHARTER — full public text</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">YOUR RIGHTS AS A CANDIDATE ON THE ALLPS AI PLATFORM
+
+At Allps AI, we believe every candidate deserves to know how they are being assessed and to have a fair say in the process. Here are your rights — and how to use them.
+
+1. THE RIGHT TO KNOW AI IS INVOLVED
+You will always be told upfront if AI is used to assess your application, screen your CV, or conduct your interview. We will explain which AI tools are involved and what they assess before you begin.
+
+2. THE RIGHT TO HUMAN REVIEW
+No AI system makes the final decision about your application. A qualified human recruiter reviews every AI assessment before any hiring decision is made. If you have concerns about your AI assessment, you can request an additional human review at any time — click 'Request Human Review' on your results page or email us.
+
+3. THE RIGHT TO AN EXPLANATION
+If you went through an AI interview or AI assessment, you can ask us to explain the main factors considered and how you performed against the competencies tested. We will give you a plain-language summary — not technical jargon. Use the 'Explain My Assessment' feature on your results page or contact us.
+
+4. THE RIGHT TO SEE YOUR DATA
+You can view all the personal data we hold about you — including your CV, application responses, interview transcripts, and AI assessment results — through your Candidate Data Portal.
+
+5. THE RIGHT TO CORRECT YOUR DATA
+If any information we hold about you is inaccurate or out of date, you can update it in your Candidate Data Portal. If an AI score was based on inaccurate data, it will be recalculated.
+
+6. THE RIGHT TO DELETE YOUR DATA
+You can ask us to delete all your personal data at any time. We will confirm deletion within 30 days. Deleting your data will close your application for any active roles.
+
+7. THE RIGHT TO OBJECT
+You can object to your application being processed through our AI systems. If you object, we will ensure your application is assessed only by a human recruiter. This may take longer than the standard AI-assisted process.
+
+8. THE RIGHT TO WITHDRAW CONSENT
+If you have given consent to AI interview recording or talent pool inclusion, you can withdraw that consent at any time without affecting your application for any active role.
+
+9. THE RIGHT TO COMPLAIN
+If you feel your rights have not been respected, you can contact us at privacy@allps.ai. You also have the right to lodge a complaint with the Swiss Federal Data Protection and Information Commissioner (FDPIC) or the national data protection authority in your country.
+
+HOW TO CONTACT US
+Email: privacy@allps.ai
+Response time: within 3 business days for acknowledgement, within 30 days for fulfilment
+Candidate Data Portal: [link]</div></div>
+    </div>
+
+    <!-- HOW AI WORKS -->
+    <div class="section" id="section-howitworks">
+      <div class="page-header">
+        <div class="page-title">Document: How Our AI Works</div>
+        <div class="page-sub">Per-module explainers for R-09 · Max 200 words each · Plain language · Website + in-app</div>
+      </div>
+      <div class="doc-section"><h3>Module 1 — AI Sourcing</h3>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">AI SOURCING EXPLAINER</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">HOW OUR AI SOURCING WORKS
+
+Our AI sourcing tool scans professional profiles and talent databases to identify candidates whose skills and experience match a job description.
+
+WHAT IT LOOKS AT: Your stated job titles, skills, years of experience, industry background, and education — the professional information you have chosen to make available.
+
+WHAT IT DOES NOT LOOK AT: Your photo, age, gender, nationality, personal social media, or any characteristic unrelated to the role.
+
+HOW IT WORKS: The AI compares the language in your profile to the language in the job description. It identifies patterns that suggest a good match — for example, relevant technical skills or industry experience.
+
+WHAT HAPPENS NEXT: Sourced candidates are presented to a human recruiter who reviews each profile personally before deciding whether to reach out.
+
+WHAT IT DOES NOT DO: The AI does not make any decision about you. It does not evaluate your personality, social behaviour, or online activity. Sourcing simply surfaces profiles that may be a good match — a human makes every contact decision.</div></div>
+      </div>
+      <div class="doc-section"><h3>Module 2 — AI Matching</h3>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">AI MATCHING EXPLAINER</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">HOW OUR AI MATCHING WORKS
+
+Our AI matching system compares your application to the requirements of the role and generates a match score to help recruiters prioritise their review queue.
+
+WHAT IT LOOKS AT: Your CV content, stated skills and experience, work history, and your responses to application questions — information you have provided directly.
+
+WHAT IT DOES NOT LOOK AT: Your photo, nationality, marital status, age (unless a legal requirement for the role), or any personal characteristic unrelated to the job.
+
+HOW IT WORKS: The AI analyses the overlap between your stated experience and the skills required for the role. It produces a relevance score that helps a recruiter decide which applications to review first — it does not make a yes/no decision.
+
+WHAT HAPPENS NEXT: A recruiter reviews all applications, including those with lower match scores. The AI score is one input among many — it does not determine your outcome.
+
+WHAT IT DOES NOT DO: The AI does not predict your personality, motivation, or cultural fit. It does not access your social media profiles or any data you have not provided.</div></div>
+      </div>
+      <div class="doc-section"><h3>Module 3 — AI Screening Interview</h3>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">AI SCREENING INTERVIEW EXPLAINER</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">HOW OUR AI SCREENING INTERVIEW WORKS
+
+Our AI screening interview is a structured video interview where you answer a set of questions designed to assess your communication skills and suitability for the role.
+
+WHAT IT ASSESSES: The content and relevance of your answers — how clearly you communicate, how you structure your responses, and how well your experience relates to the questions asked.
+
+WHAT IT DOES NOT ASSESS: Your facial expressions, tone of voice, emotional state, appearance, or any physical or personal characteristics. We do not use emotion recognition technology.
+
+HOW IT WORKS: Your responses are transcribed and analysed for relevance, clarity, and alignment with the role competencies. The AI generates a structured assessment report for the recruiter.
+
+WHAT HAPPENS NEXT: A human recruiter reads your assessment report and reviews your interview before making any decision. The AI assessment is a structured summary — not a decision.
+
+WHAT IT DOES NOT DO: The AI does not reject candidates. It does not infer your personality, mental state, or personal characteristics from how you look or sound. It only evaluates what you say in response to the questions.</div></div>
+      </div>
+      <div class="doc-section"><h3>Module 4 — AI Skills Interview</h3>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">AI SKILLS INTERVIEW EXPLAINER</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">HOW OUR AI SKILLS INTERVIEW WORKS
+
+Our AI skills interview presents you with role-specific tasks, problems, or scenarios to assess your technical and professional competencies for the job.
+
+WHAT IT ASSESSES: Your responses to structured tasks — for example, a coding challenge, a case study analysis, or a written problem-solving exercise. The AI evaluates the quality, accuracy, and relevance of your work.
+
+WHAT IT DOES NOT ASSESS: Your speed unless speed is explicitly a stated requirement of the role. How you look, sound, or present yourself. Any characteristic unrelated to the specific competencies being tested.
+
+HOW IT WORKS: Each task is designed around the specific skills required for the role. Your responses are scored against a defined rubric created for that role by the employer and our team.
+
+WHAT HAPPENS NEXT: Your skills assessment results are reviewed by a human recruiter alongside your full application. No decision is made based on the skills interview alone.
+
+WHAT IT DOES NOT DO: The AI does not assess your potential, personality, or growth mindset. It evaluates only the specific competencies tested in the tasks — nothing more.</div></div>
+      </div>
+    </div>
+
+    <!-- CONSENT UI COPY -->
+    <div class="section" id="section-consent">
+      <div class="page-header">
+        <div class="page-title">Document: Consent UI Copy</div>
+        <div class="page-sub">Screen-by-screen copy for R-02 &amp; R-07 · One item per screen · Unchecked by default · No dark patterns</div>
+      </div>
+      <div class="doc-section"><h3>Consent Screen B — AI Screening Interview Recording</h3>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">SCREENING INTERVIEW CONSENT SCREEN</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">HEADLINE: Before we start your AI screening interview
+
+SUBHEAD: We need your consent to record and analyse your responses.
+
+BODY:
+This interview will be recorded (audio and video). Your responses will be transcribed and assessed by our AI system to evaluate your communication skills and how your experience relates to the role.
+
+The assessment report is reviewed by a human recruiter. No decision is made by the AI alone.
+
+WHAT WE COLLECT:
+- Audio and video recording of your interview session
+- Transcript of your spoken responses
+- AI-generated assessment of your answers
+
+HOW LONG WE KEEP IT:
+Your recording and transcript are deleted when the role closes, and no later than 6 months after role closure.
+
+YOUR RIGHTS:
+You can withdraw this consent at any time from your Candidate Data Portal. Withdrawing consent will not affect your application status, but the recruiter will review your application without the AI assessment.
+
+[ Toggle — unchecked by default ]
+Label: I consent to my screening interview being recorded and assessed by Allps AI's screening system
+
+CTA (primary): I consent — start interview
+Secondary link: Read our full Privacy Notice
+Secondary link: I do not consent (returns to application without recording)</div></div>
+      </div>
+      <div class="doc-section"><h3>Consent Screen C — AI Skills Interview Recording</h3>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">SKILLS INTERVIEW CONSENT SCREEN</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">HEADLINE: Before we start your AI skills assessment
+
+SUBHEAD: We need your consent to record and assess your task responses.
+
+BODY:
+This skills assessment will be recorded. Your responses to the tasks presented will be evaluated by our AI system against the competencies required for this role.
+
+The assessment is reviewed by a human recruiter. No decision is made by the AI alone.
+
+WHAT WE COLLECT:
+- Your responses to each assessment task (text, code, or recorded answers depending on the task format)
+- AI-generated competency scores for each task
+
+HOW LONG WE KEEP IT:
+Deleted when the role closes, no later than 6 months after role closure.
+
+YOUR RIGHTS:
+You can withdraw this consent at any time from your Candidate Data Portal without affecting your application status.
+
+[ Toggle — unchecked by default ]
+Label: I consent to my skills assessment responses being recorded and evaluated by Allps AI's skills assessment system
+
+CTA (primary): I consent — start assessment
+Secondary: I do not consent (returns to application)</div></div>
+      </div>
+      <div class="doc-section"><h3>Consent Screen D — Talent Pool</h3>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">TALENT POOL CONSENT SCREEN</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">HEADLINE: Stay in our talent pool for future opportunities
+
+SUBHEAD: This is optional — it has no effect on your current application.
+
+BODY:
+If you are not selected for this role, would you like [Employer name] to keep your profile on file for future positions that match your skills?
+
+WHAT THIS MEANS:
+- Your CV, profile, and application details will be kept for up to 6 months after this application closes
+- We will contact you if a relevant role comes up
+- Every 6 months, we will ask if you want to stay in the pool — you choose each time
+- You can leave the talent pool at any time from your Candidate Data Portal
+
+WHAT WE KEEP:
+Your name, CV, skills, work history, and application answers. We do not keep your interview recordings in the talent pool.
+
+[ Toggle — unchecked by default ]
+Label: Yes, keep my profile in [Employer name]'s talent pool for up to 6 months
+
+CTA (primary): Save preference
+Secondary: No thanks — delete my data when this application closes</div></div>
+      </div>
+      <div class="doc-section"><h3>Pre-Interview Disclosure Modal (R-07) — required before recording begins</h3>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">AI INTERVIEW DISCLOSURE MODAL</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">HEADLINE: You are about to start an AI-conducted interview
+
+BODY:
+This interview is conducted by Allps AI. Your responses will be assessed by our AI screening system to evaluate your communication and situational judgement for this role.
+
+Here is what you should know:
+• This session will be recorded (audio and video)
+• Your responses will be transcribed and analysed by our AI
+• We do not analyse your facial expressions, emotions, or appearance
+• A human recruiter will review your AI assessment before any decision is made about your application
+• You can stop the interview at any time — contact the employer to reschedule if needed
+
+YOUR RIGHTS:
+You can request a human review of your assessment, ask for an explanation of your results, or withdraw your consent after the interview from your Candidate Data Portal or by emailing privacy@allps.ai.
+
+Links: How Our AI Works | Privacy Notice
+
+CTA (primary): I understand — start interview
+
+NOTE FOR DEV: Candidate must click this CTA before recording begins. No auto-proceed on timer or page load. Log acknowledgement with: session_id, candidate_id (hashed), acknowledgement_timestamp, disclosure_version.</div></div>
+      </div>
+    </div>
+
+    <!-- INTERVIEW DISCLOSURE -->
+    <div class="section" id="section-interview">
+      <div class="page-header">
+        <div class="page-title">Document: Interview Pre-Notification Email</div>
+        <div class="page-sub">For R-07 &amp; Comms Track · Send minimum 24 hours before AI interview · Covers rights, preparation, what to expect</div>
+      </div>
+      <div class="copy-block"><div class="copy-header"><span class="copy-label">INTERVIEW PRE-NOTIFICATION EMAIL — full template</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">Subject: Your AI interview for [Role title] at [Employer] — what to expect
+
+Hi [First name],
+
+You have been invited to complete an AI interview for the [Role title] position at [Employer]. Your interview is ready to start whenever you are — you have until [deadline date and time, timezone] to complete it.
+
+WHAT IS AN AI INTERVIEW?
+This is a structured video interview conducted by Allps AI. You will answer [X] questions presented on screen. Your responses will be recorded and assessed by our AI system, and then reviewed by a human recruiter at [Employer].
+
+WHAT THE AI ASSESSES:
+• How clearly and relevantly you communicate
+• How your experience and examples relate to the role requirements
+• Situational judgement and problem-solving (depending on role)
+
+WHAT THE AI DOES NOT ASSESS:
+• Your facial expressions or emotional state
+• How you look or sound
+• Any personal characteristic unrelated to the role
+
+HOW TO PREPARE:
+• Find a quiet space with good lighting and a stable internet connection
+• Test your camera and microphone before starting
+• You will see each question for [X] seconds before recording begins
+• You will have [X] minutes to answer each question — take your time
+• You cannot pause mid-interview, so choose a time when you will not be interrupted
+
+YOUR RIGHTS:
+• You can request a human review of your assessment at any time
+• You can ask for an explanation of your results once the process concludes
+• You can withdraw your consent to AI recording from your Candidate Data Portal — this will not affect your application
+
+[Button CTA: Start my interview]
+
+Interview closes: [Deadline date and time, timezone]
+
+Questions? Contact [recruiter name] at [email], or visit your Candidate Data Portal: [link]
+
+Read How Our AI Works: [link] | Read our Privacy Notice: [link]
+
+Good luck — we look forward to learning more about you.
+
+[Employer name] Recruitment Team, powered by Allps AI</div></div>
+    </div>
+
+    <!-- DSR COMMUNICATIONS -->
+    <div class="section" id="section-dsr">
+      <div class="page-header">
+        <div class="page-title">Document: DSR Communications</div>
+        <div class="page-sub">Templated responses for R-28 · GDPR Art. 12 compliant · All five request types</div>
+      </div>
+      <div class="doc-section"><h3>Template 1 — DSR receipt acknowledgement (send within 3 business days)</h3>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">DSR ACKNOWLEDGEMENT EMAIL</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">Subject: We have received your data request — [DSR-XXXXXX]
+
+Hi [First name],
+
+Thank you for contacting us. We have received your request to [access your data / delete your data / correct your data / receive a copy of your data / object to processing — select applicable].
+
+Your request reference number is [DSR-XXXXXX]. Please keep this for your records.
+
+WHAT HAPPENS NEXT:
+We will verify your identity (if we have not already done so) and then process your request. Under data protection law, we have up to 30 days to respond to you — though we aim to respond sooner.
+
+If we need any additional information from you to fulfil your request, we will contact you within 5 business days.
+
+HOW TO CHECK YOUR REQUEST STATUS:
+Log in to your Candidate Data Portal: [link]
+Or reply to this email with your reference number.
+
+If you have any questions, contact us at privacy@allps.ai.
+
+Kind regards,
+Allps AI Data Protection Team</div></div>
+      </div>
+      <div class="doc-section"><h3>Template 2 — DSR completion (erasure / deletion)</h3>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">DELETION CONFIRMATION EMAIL</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">Subject: Your data deletion request is complete — [DSR-XXXXXX]
+
+Hi [First name],
+
+We have completed your request to delete your personal data from the Allps AI platform.
+
+WHAT WE HAVE DELETED:
+• Your candidate profile and application data
+• Your CV and all application responses
+• Your AI interview recordings and transcripts
+• Your AI assessment results
+• Your consent records
+
+PLEASE NOTE:
+Some data may be retained temporarily in backup systems, which are purged on a rolling 30-day schedule. Audit log entries relating to your data requests are retained for our compliance records as required by law.
+
+Your application for any active roles has been closed as a result of this deletion. If you applied to roles through employers who use Allps AI, those employers have been notified that your application has been withdrawn.
+
+Request reference: [DSR-XXXXXX]
+Completed: [date]
+
+If you have any questions about what has been deleted, contact privacy@allps.ai.
+
+Kind regards,
+Allps AI Data Protection Team</div></div>
+      </div>
+      <div class="doc-section"><h3>Template 3 — Human review request acknowledgement (send within 24 hours)</h3>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">HUMAN REVIEW REQUEST ACKNOWLEDGEMENT</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">Subject: Your request for human review — [Role title] at [Employer]
+
+Hi [First name],
+
+We have received your request for a human review of your AI assessment for the [Role title] position at [Employer].
+
+WHAT HAPPENS NEXT:
+A qualified recruiter will review your full application and AI assessment results personally. We will complete this review within 5 business days and contact you with the outcome.
+
+Your request reference: [REQ-XXXXXX]
+
+You do not need to do anything else. We will be in touch.
+
+If you have questions in the meantime, contact privacy@allps.ai and quote your reference number.
+
+Kind regards,
+Allps AI Candidate Support</div></div>
+      </div>
+      <div class="doc-section"><h3>Template 4 — DSR rejection (where legally justified)</h3>
+        <div class="copy-block"><div class="copy-header"><span class="copy-label">DSR REJECTION NOTICE</span><button class="copy-btn" onclick="copyText(this)">Copy</button></div><div class="copy-content">Subject: Update on your data request — [DSR-XXXXXX]
+
+Hi [First name],
+
+Thank you for your data request [DSR-XXXXXX] received on [date].
+
+We have reviewed your request and are unable to fulfil it in full for the following reason:
+
+[Reason — select applicable:]
+• We are legally required to retain certain records for [X] months / years under [applicable law]
+• We were unable to verify your identity from the information provided — please reply with [additional verification detail]
+• The data you have requested does not exist in our systems
+
+WHAT YOU CAN DO:
+If you believe we have made an error in this decision, you can contact us at privacy@allps.ai to discuss further. You also have the right to lodge a complaint with the Swiss Federal Data Protection and Information Commissioner (FDPIC) at edoeb.admin.ch.
+
+Request reference: [DSR-XXXXXX]
+
+Kind regards,
+Allps AI Data Protection Team</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showSection(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const sec = document.getElementById('section-' + id);
+  if (sec) sec.classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+function toggleRec(id) {
+  const card = document.getElementById(id);
+  if (card) card.classList.toggle('open');
+}
+
+function showTab(el, recId, tabName) {
+  const card = document.getElementById(recId);
+  if (!card) return;
+  const body = card.querySelector('.rec-body');
+  body.querySelectorAll('.rec-tab').forEach(t => t.classList.remove('active'));
+  body.querySelectorAll('.rec-pane').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  const pane = body.querySelector('[data-rec="' + recId + '"][data-tab="' + tabName + '"]');
+  if (pane) pane.classList.add('active');
+}
+
+function copyText(btn) {
+  const content = btn.closest('.copy-block').querySelector('.copy-content').textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(content.trim()).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = orig, 1500);
+    });
+  }
+}
+</script>
+</body>
+</html>
