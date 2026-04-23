@@ -1,14 +1,5 @@
 {
-  "rewrites": [
-    {
-      "source": "/mockups/html/(.*)",
-      "destination": "/mockups/html/$1"
-    },
-    {
-      "source": "/((?!mockups/html/).*)",
-      "destination": "/"
-    }
-  ],
+  "rewrites": [{ "source": "/(.*)", "destination": "/" }],
   "headers": [
     {
       "source": "/(.*)",

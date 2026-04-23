@@ -57,8 +57,10 @@ export default function App() {
     })
 
   const handleLaunch = useCallback((mockup) => {
-    // Both JSX and HTML mockups open in the fullscreen overlay
-    // HTML renders in an iframe, JSX lazy-loads the component
+    if (mockup.type === 'html') {
+      window.open(`/mockups/html/${mockup.file}`, '_blank')
+      return
+    }
     setOpenMockup(mockup)
   }, [])
 
