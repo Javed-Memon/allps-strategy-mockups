@@ -1,5 +1,20 @@
 [
   {
+    "id": "compliance-implementation-hub",
+    "title": "Compliance Implementation Hub",
+    "description": "GDPR and EU AI Act Compliance hub",
+    "category": "Other",
+    "tags": [
+      "GDPR",
+      "EU-AI-ACT"
+    ],
+    "type": "html",
+    "file": "allps_ai_compliance_implementation_hub.html",
+    "status": "review",
+    "addedAt": "2026-04-23",
+    "addedBy": "Javed Memon"
+  },
+  {
     "id": "competitor-analysis",
     "title": "Competitor Analysis",
     "description": "Analysis of competition in Europe",
