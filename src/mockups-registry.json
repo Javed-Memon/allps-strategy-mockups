@@ -1,5 +1,19 @@
 [
   {
+    "id": "allpsch-updated-landing-page-mockup",
+    "title": "Allps.ch Updated Landing Page mockup",
+    "description": "A new look at Allps.ch AI services focused landing page",
+    "category": "Go-to-Market",
+    "tags": [
+      "Allps.ch"
+    ],
+    "type": "html",
+    "file": "allps-website.html",
+    "status": "review",
+    "addedAt": "2026-05-01",
+    "addedBy": "Javed Memon"
+  },
+  {
     "id": "compliance-implementation-hub",
     "title": "Compliance Implementation Hub",
     "description": "GDPR and EU AI Act Compliance hub",
