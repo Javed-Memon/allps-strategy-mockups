@@ -2,13 +2,13 @@
   {
     "id": "ats-on-demand-pricing-calculator",
     "title": "ATS-on-Demand Pricing Calculator",
-    "description": "Pricing strategy comparison for ATS-on-Demand",
+    "description": "Pricing strategy comparison for ATS on demand",
     "category": "Pricing & Packaging",
     "tags": [
       "ATS-On-Demand"
     ],
     "type": "react",
-    "file": "ATS-on-Demand-pricing-calculator",
+    "file": "allps-pricing-calculator",
     "status": "draft",
     "addedAt": "2026-05-15",
     "addedBy": "Javed Memon"
